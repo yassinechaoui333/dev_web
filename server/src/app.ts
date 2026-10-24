@@ -3,6 +3,8 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { db } from './db.js';
+import { profileRouter } from './modules/auth/profile.js';
+import { adminRouter } from './modules/admin/router.js';
 import { authRouter } from './modules/auth/router.js';
 import { ApiError, errorHandler } from './shared/errors.js';
 import { csrfGuard } from './shared/security.js';
@@ -15,6 +17,7 @@ app.get('/api/health', async (_req, res) => {
   try { await db.$queryRaw`SELECT 1`; res.json({ data: { status: 'ok', database: 'up' } }); }
   catch { throw new ApiError(503, 'DATABASE_UNAVAILABLE', 'Database unavailable'); }
 });
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authRouter, profileRouter);
+app.use('/api/admin', adminRouter);
 app.use((_req, _res, next) => next(new ApiError(404, 'NOT_FOUND', 'Endpoint not found')));
 app.use(errorHandler);

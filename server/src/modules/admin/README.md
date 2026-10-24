@@ -1,1 +1,1 @@
-Reserved for Yassine. See /docs/api-contract.yaml and /docs/data-contract.md. No runtime feature implementation in the foundation checkpoint.
+Yassine-owned administration: user roles/status, metadata-only dataset summaries, global counts and activity logs. All routes use authenticate + requireAdmin. See docs/api-contract.yaml.

@@ -677,8 +677,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "requestBody": {
           "required": true,
           "content": {
@@ -702,7 +700,8 @@
               }
             }
           }
-        }
+        },
+        "description": "At least name or email required. Email change requires currentPassword, revokes other sessions and retains this session. Role/active/owner fields are rejected."
       }
     },
     "/api/auth/password": {
@@ -783,8 +782,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "requestBody": {
           "required": true,
           "content": {
@@ -809,7 +806,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Verify current password; new password must differ. Revoke all sessions and clear cookie. Sign in again after success."
       }
     },
     "/api/admin/users": {
@@ -913,8 +911,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "page",
@@ -1032,8 +1028,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1068,7 +1062,8 @@
               "format": "uuid"
             }
           }
-        ]
+        ],
+        "description": "ADMIN only; may change another account role or active flag. Self role/status changes return 409 SELF_CHANGE_FORBIDDEN. Changes revoke target sessions and create an audit record. Last active admin cannot be removed. Rechecks actor session/role inside the account transaction."
       }
     },
     "/api/admin/summary": {
@@ -1164,9 +1159,7 @@
               }
             }
           }
-        },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint."
+        }
       }
     },
     "/api/admin/datasets": {
@@ -1270,8 +1263,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "page",
@@ -1396,8 +1387,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "page",
