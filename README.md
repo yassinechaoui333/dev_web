@@ -20,3 +20,7 @@ npm run build
 npm test
 ```
 Use an isolated development/test database. Tests never belong against production.
+
+Yassine's scope is complete on **feature/auth-admin**. [Handoff and push commands](docs/integration-summary.md) include the exact foundation checkpoint and checks. Ahmed, Taha and Abdelali's modules remain reserved for them.
+
+Routes: public presentation `/`, workspace `/app`, profile `/app/profile`, administration `/app/admin`.

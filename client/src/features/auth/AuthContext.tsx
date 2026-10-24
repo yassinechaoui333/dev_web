@@ -10,7 +10,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     catch (e) { setUser(null); if (!(e instanceof ApiError && e.status === 401)) setError((e as Error).message); }
     finally { setLoading(false); }
   }
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    function expired() { setUser(null); setError(''); }
+    window.addEventListener('auth:expired', expired); void refresh();
+    return () => window.removeEventListener('auth:expired', expired);
+  }, []);
   return <Context.Provider value={{ user, setUser, loading, error, refresh }}>{children}</Context.Provider>;
 }
 export function useAuth() { const value = useContext(Context); if (!value) throw new Error('AuthProvider missing'); return value; }

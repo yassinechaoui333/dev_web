@@ -41,7 +41,7 @@ The current deployment model uses separate client assets and API behind one orig
 Run migrations before starting the server. Schedule deletion of expired sessions as an operational maintenance task. Account email verification, password recovery, MFA, distributed rate limiting and deployment automation are outside this MVP.
 
 ## Frontend routes and account writes
-Visitor presentation: /. Login: /login. Registration: /register. Protected workspace: /app. Feature integrations should use /app/datasets, /app/analytics and /app/dashboards; coordinate mounting in client/src/main.tsx with Yassine. Profile and admin routes will be /app/profile and /app/admin.
+Visitor presentation: /. Login: /login. Registration: /register. Protected workspace: /app. Feature integrations should use /app/datasets, /app/analytics and /app/dashboards; coordinate mounting in client/src/main.tsx with Yassine. Profile and admin routes are /app/profile and /app/admin.
 
 Account security changes and session creation use one PostgreSQL transaction advisory lock. Password verification begins outside the lock; login rechecks the unchanged hash and active status inside it. This prevents old-password login races with password changes. Transactional audit records contain no secrets. The global lock favors correctness at MVP traffic levels; revisit its granularity before high-volume deployment.
 
