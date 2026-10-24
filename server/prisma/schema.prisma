@@ -1,0 +1,153 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum Role {
+  USER
+  ADMIN
+}
+enum ImportStatus {
+  pending
+  processing
+  completed
+  failed
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique @db.VarChar(254)
+  name String @db.VarChar(100)
+  passwordHash String
+  role Role @default(USER)
+  active Boolean @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  sessions Session[]
+  datasets Dataset[]
+  dashboards Dashboard[]
+  shares DashboardShare[]
+  activities Activity[]
+}
+model Session {
+  id String @id @default(uuid()) @db.Uuid
+  tokenHash String @unique
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([userId])
+  @@index([expiresAt])
+}
+model Dataset {
+  id String @id @default(uuid()) @db.Uuid
+  ownerId String @db.Uuid
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  title String @db.VarChar(200)
+  description String @default("")
+  category String @default("") @db.VarChar(100)
+  source String @default("") @db.VarChar(500)
+  currency String @db.Char(3)
+  dateFormat String @default("ISO8601")
+  timezone String @default("UTC")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  importJobs ImportJob[]
+  rawRecords RawRecord[]
+  salesRecords SalesRecord[]
+  dashboards Dashboard[]
+  @@unique([id, ownerId])
+  @@index([ownerId])
+}
+model ImportJob {
+  id String @id @default(uuid()) @db.Uuid
+  datasetId String @db.Uuid
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  filename String @db.VarChar(255)
+  contentHash String @db.Char(64)
+  retryCount Int @default(0)
+  status ImportStatus @default(pending)
+  totalRows Int @default(0)
+  processedRows Int @default(0)
+  acceptedRows Int @default(0)
+  rejectedRows Int @default(0)
+  error String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  completedAt DateTime? @db.Timestamptz(3)
+  rawRecords RawRecord[]
+  salesRecords SalesRecord[]
+  @@unique([id, datasetId])
+  @@unique([datasetId, contentHash])
+  @@index([datasetId, createdAt])
+}
+model RawRecord {
+  id String @id @default(uuid()) @db.Uuid
+  datasetId String @db.Uuid
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  importJobId String @db.Uuid
+  importJob ImportJob @relation(fields: [importJobId, datasetId], references: [id, datasetId], onDelete: Cascade)
+  sourceRow Int
+  values Json
+  validationErrors Json?
+  salesRecord SalesRecord?
+  @@unique([importJobId, sourceRow])
+  @@unique([id, importJobId, datasetId])
+}
+model SalesRecord {
+  id String @id @default(uuid()) @db.Uuid
+  datasetId String @db.Uuid
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  importJobId String @db.Uuid
+  importJob ImportJob @relation(fields: [importJobId, datasetId], references: [id, datasetId], onDelete: Cascade)
+  rawRecordId String @unique @db.Uuid
+  rawRecord RawRecord @relation(fields: [rawRecordId, importJobId, datasetId], references: [id, importJobId, datasetId], onDelete: Cascade)
+  invoiceNumber String
+  productCode String
+  description String
+  quantity Decimal @db.Decimal(18, 4)
+  invoiceDate DateTime @db.Timestamptz(3)
+  unitPrice Decimal @db.Decimal(18, 4)
+  customerId String?
+  country String
+  isCancellation Boolean @default(false)
+  @@unique([rawRecordId, importJobId, datasetId])
+  @@index([datasetId, invoiceDate])
+  @@index([datasetId, country, productCode])
+}
+model Dashboard {
+  id String @id @default(uuid()) @db.Uuid
+  ownerId String @db.Uuid
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  datasetId String @db.Uuid
+  dataset Dataset @relation(fields: [datasetId, ownerId], references: [id, ownerId], onDelete: Cascade)
+  title String @db.VarChar(200)
+  config Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  shares DashboardShare[]
+  @@index([ownerId])
+  @@index([datasetId])
+}
+model DashboardShare {
+  id String @id @default(uuid()) @db.Uuid
+  dashboardId String @db.Uuid
+  dashboard Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([dashboardId, userId])
+  @@index([userId])
+}
+model Activity {
+  id String @id @default(uuid()) @db.Uuid
+  actorId String? @db.Uuid
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action String @db.VarChar(100)
+  entityType String @db.VarChar(50)
+  entityId String?
+  metadata Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([createdAt])
+  @@index([actorId])
+}
