@@ -1,7 +1,7 @@
 # Yassine integration handoff
 
 ## Foundation checkpoint
-Use tag foundation-v1 to resolve the exact initial foundation commit: `git rev-parse foundation-v1`. Local main starts at this checkpoint. Authentication, shared schema/migration, fictional seed, public presentation, protected shell, access helpers and initial team contracts are included. Admin/profile operations remain reserved in this checkpoint and follow in feature/auth-admin.
+Use tag foundation-v1.1 to resolve the exact foundation commit: `git rev-parse foundation-v1.1`. The initial foundation-v1 commit is 2c7dd318ae683397af59b3dae5d03340ef4d91f1; v1.1 fixes explicit root .env loading for Prisma commands. Local main starts at this checkpoint. Authentication, shared schema/migration, fictional seed, public presentation, protected shell, access helpers and initial team contracts are included. Admin/profile operations remain reserved in this checkpoint and follow in feature/auth-admin.
 
 Verified against a fresh standalone PostgreSQL 16 database: committed migration applies; fictional seed can run twice; client/server production builds pass; login, logout, unauthorized current-user access, session expiry, CSRF, role-injection rejection, password hashing and shared filters pass automated checks.
 

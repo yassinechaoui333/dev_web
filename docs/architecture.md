@@ -22,7 +22,7 @@ Separate terminals: npm run dev -w server and npm run dev -w client.
 Verify: npm run build and npm test. Health: curl http://localhost:3001/api/health.
 Windows PowerShell uses Copy-Item .env.example .env. Execute npm within the repository's native filesystem (WSL for a WSL checkout).
 For an existing PostgreSQL installation, set DATABASE_URL and omit Docker.
-Prisma commands run in server/ and find ../.env; runtime and seed load the same root file. Never commit .env.
+Prisma commands run in server/; prisma.config.ts explicitly loads the root .env; runtime and seed load the same root file. Never commit .env.
 Seed accounts: yassine@example.test / DevAdmin123! (ADMIN); member@example.test / DevMember123! (USER).
 Passwords come from SEED_ADMIN_PASSWORD and SEED_USER_PASSWORD. Change them outside local development.
 Seed reruns do not reset passwords or privileges. The sample dataset belongs to the member and is GBP; net revenue is 32.7500.
@@ -44,3 +44,5 @@ Run migrations before starting the server. Schedule deletion of expired sessions
 Visitor presentation: /. Login: /login. Registration: /register. Protected workspace: /app. Feature integrations should use /app/datasets, /app/analytics and /app/dashboards; coordinate mounting in client/src/main.tsx with Yassine. Profile and admin routes will be /app/profile and /app/admin.
 
 Account security changes and session creation use one PostgreSQL transaction advisory lock. Password verification begins outside the lock; login rechecks the unchanged hash and active status inside it. This prevents old-password login races with password changes. Transactional audit records contain no secrets. The global lock favors correctness at MVP traffic levels; revisit its granularity before high-volume deployment.
+
+The API binds HOST=127.0.0.1 by default. Set HOST=0.0.0.0 only when container/network deployment requires it. The Vite development proxy and APP_ORIGIN keep browser/API requests on one origin.

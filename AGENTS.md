@@ -9,7 +9,7 @@ Read this file, docs/architecture.md, docs/api-contract.yaml, docs/data-contract
 - Abdelali: server/src/modules/dashboards and client/src/features/dashboards.
 - Do not implement another owner's features. Contract-compatible development fixtures must be clearly labelled, never presented as live results.
 - Coordinate changes to root configuration, shared UI/middleware, API contracts, npm lockfile and Prisma schema with Yassine. Propose the exact compatibility impact before changing a published contract. Add migrations; never edit an applied migration.
-- Branch from the verified foundation tag foundation-v1 after Yassine integrates that checkpoint into main. Teammates use feature/datasets, feature/analytics, feature/dashboards. Do not merge or overwrite another feature branch automatically.
+- Branch from the verified foundation tag foundation-v1.1 after Yassine integrates that checkpoint into main. Teammates use feature/datasets, feature/analytics, feature/dashboards. Do not merge or overwrite another feature branch automatically.
 - Use npm workspaces and the single root package-lock.json. Node 22.12+ and PostgreSQL 16. Use Recharts 3 for all charts.
 - REST lives under /api. Validate input, use shared error/pagination conventions, authenticate first, check resource access on every endpoint. UUID validation before Prisma calls.
 - Never trust client-supplied role, ownerId, actorId or userId for ownership. Use the authenticated session user. Admin privileges do not grant dataset content access.
