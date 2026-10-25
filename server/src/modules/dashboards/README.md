@@ -1,1 +1,1 @@
-Reserved for Abdelali. See /docs/api-contract.yaml and /docs/data-contract.md. No runtime feature implementation in the foundation checkpoint.
+Abdelali — module implemented in the authorized complete MVP. See docs/api-contract.yaml and docs/team-status.md.

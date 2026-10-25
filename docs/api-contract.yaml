@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Sales & Data Quality Platform",
-    "version": "1.0.0",
-    "description": "All mutations require Origin matching APP_ORIGIN and X-Requested-With: SalesPlatform. Unknown request fields are rejected. Cookie sessions authenticate protected endpoints. Reserved operations are contracts only and return 404 until implemented. See data-contract.md and analytics-conventions.md for access/filter/calculation rules."
+    "version": "1.1.0",
+    "description": "Complete MVP. Mutations require Origin matching APP_ORIGIN and X-Requested-With: SalesPlatform. HttpOnly PostgreSQL-backed sessions. Ownership, pagination, filters and errors follow docs/data-contract.md. Import processing runs in a durable background queue in the API process."
   },
   "servers": [
     {
@@ -1511,8 +1511,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "page",
@@ -1628,8 +1626,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1779,8 +1775,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "datasetId",
@@ -1870,8 +1864,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "datasetId",
@@ -1886,8 +1878,6 @@
       },
       "patch": {
         "summary": "Ahmed: edit dataset metadata; parsing/currency immutable after import",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2097,8 +2087,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Multipart CSV file, maximum 10 MiB. SHA-256 of original bytes unique per dataset; duplicate content returns 409 DUPLICATE_IMPORT with existing job ID in message. Return 202 after durable source storage and pending job creation. Worker runs separately; never expose partially processed sales.",
+        "description": "CSV multipart file, maximum 10 MiB / 100,000 logical records. Store original bytes privately in ImportSource; return 202 pending. A timer worker processes jobs after the response. Duplicate content within the dataset returns 409 DUPLICATE_IMPORT. Failed jobs can retry their retained source; only completed jobs publish clean rows.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2231,8 +2220,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2359,8 +2346,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2484,8 +2469,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2612,8 +2595,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2755,8 +2736,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2905,8 +2884,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "datasetId",
@@ -3067,7 +3044,6 @@
             }
           }
         },
-        "x-status": "reserved",
         "description": "Check access to both datasets and require equal currency. Either compareDatasetId or a full compareFrom/compareTo interval is required. See data-contract.md.",
         "parameters": [
           {
@@ -3241,8 +3217,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "page",
@@ -3358,8 +3332,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3484,8 +3456,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "dashboardId",
@@ -3591,8 +3561,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3702,8 +3670,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "dashboardId",
@@ -3772,10 +3738,27 @@
                           "points"
                         ]
                       }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "currency": {
+                          "type": "string"
+                        },
+                        "timezone": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "currency",
+                        "timezone"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
-                    "data"
+                    "data",
+                    "meta"
                   ]
                 }
               }
@@ -3852,8 +3835,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "dashboardId",
@@ -3968,8 +3949,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "dashboardId",
@@ -4094,8 +4073,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "requestBody": {
           "required": true,
           "content": {
@@ -4107,10 +4084,34 @@
                   "userId": {
                     "type": "string",
                     "format": "uuid"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
                   }
                 },
-                "required": [
-                  "userId"
+                "required": [],
+                "oneOf": [
+                  {
+                    "required": [
+                      "userId"
+                    ],
+                    "not": {
+                      "required": [
+                        "email"
+                      ]
+                    }
+                  },
+                  {
+                    "required": [
+                      "email"
+                    ],
+                    "not": {
+                      "required": [
+                        "userId"
+                      ]
+                    }
+                  }
                 ]
               }
             }
@@ -4207,8 +4208,6 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
         "parameters": [
           {
             "name": "dashboardId",
@@ -4234,8 +4233,6 @@
     "/api/datasets/{datasetId}/analytics/records": {
       "get": {
         "summary": "Taha: server-side explorer",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
         "responses": {
           "200": {
             "description": "Success",
@@ -4420,8 +4417,6 @@
     "/api/datasets/{datasetId}/analytics/info": {
       "get": {
         "summary": "Taha: dataset and column information",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
         "responses": {
           "200": {
             "description": "Success",
@@ -4509,8 +4504,6 @@
     "/api/datasets/{datasetId}/analytics/top-products": {
       "get": {
         "summary": "Taha: top-products",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
         "responses": {
           "200": {
             "description": "Success",
@@ -4645,8 +4638,6 @@
     "/api/datasets/{datasetId}/analytics/sales-by-country": {
       "get": {
         "summary": "Taha: sales-by-country",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
         "responses": {
           "200": {
             "description": "Success",
@@ -4771,8 +4762,6 @@
     "/api/datasets/{datasetId}/analytics/revenue-over-time": {
       "get": {
         "summary": "Taha: revenue-over-time",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
         "responses": {
           "200": {
             "description": "Success",
@@ -4910,8 +4899,6 @@
     "/api/datasets/{datasetId}/imports/{importJobId}/rejections": {
       "get": {
         "summary": "Ahmed: rejected rows with sourceRow and validationErrors",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
         "responses": {
           "200": {
             "description": "Success",
@@ -5034,8 +5021,6 @@
     "/api/datasets/{datasetId}/imports/{importJobId}/retry": {
       "post": {
         "summary": "Ahmed: retry failed job using retained source file",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
         "responses": {
           "202": {
             "description": "Success",
@@ -5785,6 +5770,16 @@
               "returns",
               "sales"
             ]
+          },
+          "invoiceNumber": {
+            "type": "string"
+          },
+          "productCode": {
+            "type": "string"
+          },
+          "sourceRow": {
+            "type": "integer",
+            "minimum": 2
           }
         },
         "required": [
@@ -5794,7 +5789,10 @@
           "method",
           "lowerBound",
           "upperBound",
-          "partition"
+          "partition",
+          "invoiceNumber",
+          "productCode",
+          "sourceRow"
         ]
       },
       "Comparison": {
@@ -6070,6 +6068,23 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              }
+            },
+            "required": [
+              "name",
+              "email"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

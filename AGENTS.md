@@ -18,3 +18,6 @@ Read this file, docs/architecture.md, docs/api-contract.yaml, docs/data-contract
 - Keep API docs and team status accurate in the same change. Reserved endpoints are not implemented until their owner ships them.
 - Run npm run build and npm test with a migrated development/test database. Tests create/delete isolated test accounts; never use a production database.
 - Commit coherent changes and include checks and limitations in the handoff. No secrets or real customer data.
+
+## Completion authorization
+On 25 October 2026 Yassine explicitly authorized completion of all four modules in this chat. The assistant may implement all feature folders while preserving the functional ownership mapping above. Keep the MVP simple, document contract additions, and produce a French report and presentation with the planned responsibilities of all four members. This authorization supersedes the previous feature-folder restriction for this completion task.

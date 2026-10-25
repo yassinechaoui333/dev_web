@@ -1,6 +1,6 @@
-# Reserved analytics conventions v1
+# Analytics conventions v1.1
 
-Implementation belongs to Taha. These contracts allow Abdelali to build against stable shapes; no analytics implementation is supplied here.
+Implemented analytics module, functionally assigned to Taha; dashboard calculations reuse this service.
 
 Quality is explicitly dataset-wide across completed import jobs. sourceRows=totalRows, acceptedRows/rejectedRows use job counters. For sourceRows=0 all component scores and overall score are 0. Validity=100*acceptedRows/sourceRows. Completeness evaluates the seven required sales columns on accepted records, excluding optional customerId from its denominator; completeness=100*presentRequiredCells/(7*acceptedRows), or 0 if no accepted records. Missing-by-column still reports all eight sales fields, including nullable customerId, with evaluatedRows=acceptedRows. Uniqueness=100*(1-duplicateCandidateCount/acceptedRows), or 0 if no accepted records. Candidate groups match all eight normalized sales fields; count is sum(groupSize-1). Candidates are review suggestions, never proven duplicate transactions or grounds for deletion. score=round(0.5*validity+0.3*completeness+0.2*uniqueness,2). Component scores round to two decimals only in responses; calculate overall from unrounded components. Date/country/product filters affect filteredRecordCount only; report scope=dataset and explain this in the UI. Rejected rows come from Ahmed's RawRecord.validationErrors and never enter clean-record denominators.
 

@@ -1,1 +1,1 @@
-Reserved for Taha. See /docs/api-contract.yaml and /docs/data-contract.md. No runtime feature implementation in the foundation checkpoint.
+Taha — module implemented in the authorized complete MVP. See docs/api-contract.yaml and docs/team-status.md.

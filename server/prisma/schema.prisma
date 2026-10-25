@@ -77,6 +77,7 @@ model ImportJob {
   completedAt DateTime? @db.Timestamptz(3)
   rawRecords RawRecord[]
   salesRecords SalesRecord[]
+  source ImportSource?
   @@unique([id, datasetId])
   @@unique([datasetId, contentHash])
   @@index([datasetId, createdAt])
@@ -150,4 +151,10 @@ model Activity {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@index([createdAt])
   @@index([actorId])
+}
+
+model ImportSource {
+  importJobId String @id @db.Uuid
+  importJob ImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+  content Bytes
 }

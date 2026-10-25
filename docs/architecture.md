@@ -46,3 +46,16 @@ Visitor presentation: /. Login: /login. Registration: /register. Protected works
 Account security changes and session creation use one PostgreSQL transaction advisory lock. Password verification begins outside the lock; login rechecks the unchanged hash and active status inside it. This prevents old-password login races with password changes. Transactional audit records contain no secrets. The global lock favors correctness at MVP traffic levels; revisit its granularity before high-volume deployment.
 
 The API binds HOST=127.0.0.1 by default. Set HOST=0.0.0.0 only when container/network deployment requires it. The Vite development proxy and APP_ORIGIN keep browser/API requests on one origin.
+
+## Complete MVP integration — 25 October 2026
+The user authorized completion of all feature modules while retaining their functional ownership mapping. Dataset CRUD/imports, analytics and saved dashboards/sharing are now implemented and mounted in the existing API. No second authentication or database layer was added.
+
+The importer uses multer memory storage (10 MiB request limit), csv-parse and Luxon. Source bytes are persisted in the private ImportSource table before a 202 response. An in-process background poller scans pending/processing jobs every second; each job is protected by a PostgreSQL advisory lock. Raw records and clean sales rows are written in a single transaction and become visible only when status=completed. A failed attempt rolls back publication and retains the source for retry. A crash leaves a processing job resumable on restart. Dataset deletion cascades all source bytes and dependent data. This deliberately simple worker is intended for the MVP, not distributed large-volume processing.
+
+Analytics uses parameterized PostgreSQL aggregations for totals, groups and server-side exploration. Money is calculated with PostgreSQL numeric and Prisma Decimal (50-digit precision); API decimals are strings. Plotting converts values to browser numbers only for display. Quality is dataset-wide and IQR works on server-side filtered records. Database access helpers run before any analytics operation; the shared dashboard data route reuses these services after validating the specific dashboard share.
+
+Dashboard configuration contains only validated predefined chart/metric/group combinations, one saved filter set and a bounded non-overlapping layout. The simple UI offers six widgets and title/filter editing. Registered recipients have read-only access; no raw sales endpoint becomes public. A pie chart omits nonpositive groups because pie geometry cannot represent negative values; its caption states this while KPI/bar/line calculations retain returns.
+
+DB_PORT controls the Docker host port (default 5432); DATABASE_URL must use the same port. On the validation machine port 5432 was occupied, so Docker uses 55432 via the ignored local .env. Use Node 22.12+ rather than the system Node 18. No additional secrets are needed for local development.
+
+References for implementation details: [CSV Parse options](https://csv.js.org/parse/options/) and [Luxon parsing](https://github.com/moment/luxon/blob/master/docs/parsing.md). The project-specific semantics remain those in data-contract.md.
