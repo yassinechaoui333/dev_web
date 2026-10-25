@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CsvFileError, decodeCsv, parseCsv, MAX_RECORDS } from '../src/modules/datasets/csv.js';
-import { parseDecimal, parseInvoiceDate, validateRecord } from '../src/modules/datasets/normalize.js';
+import { isValidTimezone, parseDecimal, parseInvoiceDate, validateRecord } from '../src/modules/datasets/normalize.js';
 import { readCsvUpload } from '../src/modules/datasets/multipart.js';
 const header = 'InvoiceNo,StockCode,Description,Quantity,InvoiceDate,UnitPrice,CustomerID,Country';
 const iso = { dateFormat: 'ISO8601', timezone: 'UTC' };
@@ -26,6 +26,19 @@ test('CSV parser fails the file for malformed structure', () => {
   bad(header + '\nA,' + 'x'.repeat(64 * 1024 + 1) + ',1', /64 KiB/);
   bad(header + '\n' + 'a\n'.repeat(MAX_RECORDS) + 'a', /data records/);
   assert.throws(() => decodeCsv(Buffer.from([0x41, 0xff, 0xfe])), /UTF-8/);
+  assert.throws(() => decodeCsv(Buffer.from('a,b\u0000c')), /NUL/);
+  bad(header + '\n' + ','.repeat(1000), /more than 1000 columns/);
+});
+
+test('long runs of line breaks are parsed in linear time', () => {
+  const started = Date.now();
+  assert.throws(() => parseCsv(header + '\n' + '\n'.repeat(200_000) + 'x'), /data records/);
+  assert.ok(Date.now() - started < 2000, 'took ' + (Date.now() - started) + ' ms');
+});
+
+test('only canonical IANA timezones are accepted', () => {
+  for (const zone of ['UTC', 'Europe/London', 'Africa/Casablanca', 'America/New_York']) assert.equal(isValidTimezone(zone), true, zone);
+  for (const zone of ['+01:00', '-05:00', 'utc', 'europe/london', 'Mars/Base', '']) assert.equal(isValidTimezone(zone), false, zone);
 });
 
 test('decimals keep up to four places, reject excess precision and non-numbers', () => {
@@ -48,7 +61,8 @@ test('dates respect offsets, dataset timezone and reject invalid or DST-ambiguou
   assert.equal(at('03/03/2026 14:00'), 'INVALID_DATE');
   const london = { dateFormat: 'DMY_HM', timezone: 'Europe/London' };
   assert.equal(at('15/01/2026 09:05', london), '2026-01-15T09:05:00.000Z');
-  assert.equal(at('5/7/2026 9:05', london), '2026-07-05T08:05:00.000Z');
+  assert.equal(at('05/07/2026 09:05', london), '2026-07-05T08:05:00.000Z');
+  assert.equal(at('5/7/2026 9:05', london), 'INVALID_DATE', 'contract format is zero-padded dd/MM/yyyy HH:mm');
   assert.equal(at('29/03/2026 01:30', london), 'NONEXISTENT_LOCAL_TIME');
   assert.equal(at('25/10/2026 01:30', london), 'AMBIGUOUS_LOCAL_TIME');
   assert.equal(at('31/04/2026 10:00', london), 'INVALID_DATE');
@@ -75,6 +89,8 @@ test('record validation normalizes cancellations, blank customers and reports ev
   assert.deepEqual(short.errors.map(e => e.code), ['COLUMN_COUNT']);
   const extra = validateRecord(headers, { sourceRow: 4, cells: [...'A,1,M,1,2026-01-01T00:00:00Z,1,,UK'.split(','), 'surplus'] }, iso);
   assert.equal(extra.values.__column_9, 'surplus');
+  const proto = validateRecord([...headers, '__proto__'], { sourceRow: 6, cells: [...'A,1,M,1,2026-01-01T00:00:00Z,1,,UK'.split(','), 'kept'] }, iso);
+  assert.equal(JSON.parse(JSON.stringify(proto.values)).__proto__, 'kept');
   assert.deepEqual(validateRecord(headers, { sourceRow: 5, cells: [''] }, iso).errors.map(e => e.code), ['EMPTY_ROW']);
 });
 

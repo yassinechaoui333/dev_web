@@ -16,12 +16,12 @@ Implements the dataset endpoints in /docs/api-contract.yaml and the import rules
 2. The worker claims the job (`pending → processing`, status-guarded), decodes UTF-8 and parses the file, then validates every row.
 3. One database transaction removes earlier staging rows for the job, inserts all RawRecords (accepted and rejected) and the SalesRecords for accepted rows, and marks the job `completed` with its counters. Nothing is visible until the commit. Any error rolls back the transaction and marks the job `failed`.
 4. A completed job deletes its retained file. A failed job keeps it. `POST /retry` (failed jobs only) resets the same job ID to `pending`, increments retryCount and deletes staging rows in one transaction, then requeues it.
-5. On startup, `recoverImportJobs()` (called from server/src/index.ts) requeues `pending` jobs and any left `processing` by a restart.
+5. On startup, `recoverImportJobs()` (called from server/src/index.ts) requeues `pending` jobs and any left `processing` by a restart. It also removes stored files older than one hour that no longer belong to a pending, processing or failed job; these are left by a crash between storing a file and creating its job, or after a completed commit.
 
-Dataset deletion cascades jobs, raw/clean rows, dashboards and shares in the database, then removes retained files.
+Dataset deletion locks the dataset row, then cascades jobs, raw/clean rows, dashboards and shares, then removes retained files. A concurrent upload waits for the lock and then gets 404, so its file is cleaned up too. An unexpected worker error marks the job `failed` (retryable) and never leaves it `processing`. Validation yields to the event loop every 1,000 rows, so other requests keep being served during large imports.
 
 ## File-level failures (job `failed`, `error` explains)
-Invalid UTF-8; unterminated or misplaced quotes; missing or duplicate headers (case-sensitive, BOM stripped); more than 100,000 data records; any field over 64 KiB. Empty files, non-`.csv` names, files over 10 MiB and malformed multipart bodies are refused at upload (400/413), so no job is created.
+Invalid UTF-8; NUL characters (PostgreSQL cannot store them); unterminated or misplaced quotes; a line with more than 1,000 columns; missing or duplicate headers (case-sensitive, BOM stripped); more than 100,000 data records; any field over 64 KiB. Empty files, non-`.csv` names, files over 10 MiB and malformed multipart bodies are refused at upload (400/413), so no job is created.
 
 ## Row-level validation (RawRecord.validationErrors)
 Each error is `{ field, code, message }`. `field` is the CSV column name, or `row` for whole-row problems. A row is accepted only when it has no errors. All errors of a row are reported, not just the first.
@@ -40,7 +40,9 @@ Each error is `{ field, code, message }`. `field` is the CSV column name, or `ro
 
 Normalization: identifiers, description and country are trimmed, with case and leading zeros kept. A blank CustomerID becomes null. An invoice starting with `C`/`c` sets isCancellation and quantity = -abs(quantity). Other negative quantities are returns. Zero quantity/price is accepted (Taha flags it for quality review). RawRecord.values keeps the original untrimmed strings under the original column names. Extra columns are kept, and surplus cells in a malformed row are stored as `__column_N`. Identical lines are never deduplicated.
 
-Dates: ISO8601 datasets accept `YYYY-MM-DDTHH:mm[:ss[.SSS]][Z|±HH:MM]` (a space instead of `T` is also accepted). DMY_HM datasets accept `d/M/yyyy H:mm` (one- or two-digit day, month and hour). Timestamps without an offset use the dataset timezone.
+Dataset timezone must be `UTC` or a canonical IANA name (e.g. `Europe/London`). Offsets such as `+01:00` and lowercase aliases are rejected because PostgreSQL reads POSIX offsets with the opposite sign.
+
+Dates: ISO8601 datasets accept `YYYY-MM-DDTHH:mm[:ss[.SSS]][Z|±HH:MM]` (a space instead of `T` is also accepted). DMY_HM datasets accept exactly `dd/MM/yyyy HH:mm` (zero-padded, as in the contract). An unpadded value such as `12/1/2010 8:26` is rejected rather than guessed, because M/D exports would otherwise import silently with day and month swapped. Timestamps without an offset use the dataset timezone.
 
 ## Fixture
 `fixtures/sample-sales.csv` (fictional) imports with **totalRows 12, acceptedRows 7, rejectedRows 5**. Rejected source rows: 8 Quantity INVALID_NUMBER, 9 InvoiceDate INVALID_DATE, 10 UnitPrice NEGATIVE_PRICE, 11 InvoiceNo REQUIRED, 12 Quantity TOO_MANY_DECIMALS. Accepted rows include a quoted comma, escaped quotes, a multiline description (row 7), a +01:00 offset, a cancellation (`C1003`, stored quantity -2), a return (-1), a zero price, a blank CustomerID and an exact duplicate line (rows 2 and 13, both kept). For reference, with the data-contract formulas: netRevenue 54.25, grossSales 68.50, returnsAmount 14.25, orderCount 3, averageOrderValue 18.08.

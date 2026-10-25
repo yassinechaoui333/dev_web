@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import { setImmediate as yieldToEventLoop } from 'node:timers/promises';
 import { db } from '../../db.js';
 import { CsvFileError, decodeCsv, parseCsv } from './csv.js';
 import { validateRecord } from './normalize.js';
-import { readSource, removeSource } from './storage.js';
+import { listSources, readSource, removeSource } from './storage.js';
 // In-process import queue. Uploads return 202 once the job is pending and the
 // source is stored; processing happens here, outside the request lifecycle.
 // Jobs run one at a time; the status-guarded claim keeps a job from being
@@ -13,12 +14,20 @@ const CHUNK = 2000;
 
 export function enqueueImport(jobId: string) {
   queue.push(jobId);
-  running ??= drain().finally(() => { running = null; });
+  if (!running) startDrain();
+}
+function startDrain() {
+  // Restart if a job was enqueued after drain() saw an empty queue.
+  running = drain().finally(() => { running = null; if (queue.length) startDrain(); });
 }
 async function drain() {
   for (let jobId = queue.shift(); jobId; jobId = queue.shift()) {
     try { await processImport(jobId); }
-    catch (error) { console.error({ importJobId: jobId, error }); }
+    catch (error) {
+      // Never leave a claimed job stuck in processing after an unexpected error.
+      console.error({ importJobId: jobId, error });
+      await failJob(jobId, 'The import could not be completed; retry the import').catch(e => console.error({ importJobId: jobId, error: e }));
+    }
   }
 }
 export async function importQueueIdle() { while (running) await running; }
@@ -28,6 +37,12 @@ export async function recoverImportJobs() {
   await db.importJob.updateMany({ where: { status: 'processing' }, data: { status: 'pending' } });
   const pending = await db.importJob.findMany({ where: { status: 'pending' }, orderBy: { createdAt: 'asc' }, select: { id: true } });
   for (const job of pending) enqueueImport(job.id);
+  // Remove files left by a crash between storing an upload and creating its job,
+  // or after a completed commit. Recent files may belong to an upload in flight.
+  const retained = new Set((await db.importJob.findMany({ where: { status: { in: ['pending', 'processing', 'failed'] } }, select: { id: true } })).map(j => j.id));
+  for (const file of await listSources()) {
+    if (!retained.has(file.jobId) && Date.now() - file.modifiedMs > 60 * 60 * 1000) await removeSource(file.jobId);
+  }
 }
 
 async function failJob(jobId: string, error: string) {
@@ -46,7 +61,12 @@ export async function processImport(jobId: string) {
     console.error({ importJobId: jobId, error });
     return failJob(jobId, (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'The original file is no longer available; upload it again' : 'The file could not be read');
   }
-  const rows = parsed.records.map(record => ({ record, ...validateRecord(parsed.headers, record, job.dataset) }));
+  // Validate in slices so other API requests are served during large imports.
+  const rows: (ReturnType<typeof validateRecord> & { record: (typeof parsed.records)[number] })[] = [];
+  for (const [index, record] of parsed.records.entries()) {
+    rows.push({ record, ...validateRecord(parsed.headers, record, job.dataset) });
+    if (index % 1000 === 999) await yieldToEventLoop();
+  }
   const acceptedRows = rows.filter(row => row.sale).length;
   await db.importJob.updateMany({ where: { id: jobId, status: 'processing' }, data: { totalRows: rows.length } });
   try {

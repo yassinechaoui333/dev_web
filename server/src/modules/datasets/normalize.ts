@@ -9,9 +9,10 @@ export type CleanSale = {
 };
 export type ParsingRules = { dateFormat: string; timezone: string };
 
-export function isValidTimezone(timezone: string) {
-  try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }); return timezone.length <= 100; } catch { return false; }
-}
+// Canonical IANA names only. Intl also accepts offsets like "+01:00" and
+// lowercase aliases, which PostgreSQL interprets differently (POSIX sign).
+const IANA_ZONES = new Set(Intl.supportedValuesOf('timeZone'));
+export const isValidTimezone = (timezone: string) => timezone === 'UTC' || IANA_ZONES.has(timezone);
 
 // decimal(18,4): at most 14 integer digits and 4 significant fraction digits.
 // Trailing fraction zeros carry no precision, so "2.50000" is accepted.
@@ -45,9 +46,22 @@ function wallClockAt(epoch: number, timezone: string) {
 }
 // Resolve a local wall time in an IANA zone. Nonexistent (DST gap) and
 // ambiguous (DST overlap) local times are rejected instead of guessed.
+// Results are cached: sales files repeat timestamps, and each lookup costs
+// several Intl calls. The cache is bounded and keyed by zone + wall time.
+const resolved = new Map<string, number | { code: string; message: string }>();
 export function localToUtc(w: Wall, timezone: string): { value: Date } | { code: string; message: string } {
   const target = wallToEpoch(w);
   if (timezone === 'UTC') return { value: new Date(target) };
+  const key = timezone + ' ' + target;
+  let result = resolved.get(key);
+  if (result === undefined) {
+    result = resolveLocal(target, timezone);
+    if (resolved.size >= 100_000) resolved.clear();
+    resolved.set(key, result);
+  }
+  return typeof result === 'number' ? { value: new Date(result) } : result;
+}
+function resolveLocal(target: number, timezone: string) {
   const day = 86_400_000, candidates = new Set<number>();
   for (const probe of [target - day, target, target + day]) {
     const offset = wallClockAt(probe, timezone) - probe;
@@ -56,11 +70,11 @@ export function localToUtc(w: Wall, timezone: string): { value: Date } | { code:
   }
   if (candidates.size === 0) return { code: 'NONEXISTENT_LOCAL_TIME', message: `This local time does not exist in ${timezone} (daylight-saving change)` };
   if (candidates.size > 1) return { code: 'AMBIGUOUS_LOCAL_TIME', message: `This local time occurs twice in ${timezone} (daylight-saving change); add an explicit UTC offset` };
-  return { value: new Date([...candidates][0]) };
+  return [...candidates][0];
 }
 
 const ISO = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-]\d{2}:\d{2})?$/i;
-const DMY_HM = /^(\d{1,2})\/(\d{1,2})\/(\d{4}) (\d{1,2}):(\d{2})$/;
+const DMY_HM = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
 export function parseInvoiceDate(raw: string, rules: ParsingRules): { value: Date } | { code: string; message: string } {
   const iso = rules.dateFormat === 'ISO8601';
   const m = (iso ? ISO : DMY_HM).exec(raw);
@@ -83,8 +97,8 @@ export function parseInvoiceDate(raw: string, rules: ParsingRules): { value: Dat
 
 export function validateRecord(headers: string[], record: CsvRecord, rules: ParsingRules) {
   // Raw values keep original strings under their original column names.
-  const values: Record<string, string> = {};
-  record.cells.forEach((cell, index) => { values[index < headers.length ? headers[index] : `__column_${index + 1}`] = cell; });
+  // Object.fromEntries defines own keys, so a column named "__proto__" is kept.
+  const values: Record<string, string> = Object.fromEntries(record.cells.map((cell, index) => [index < headers.length ? headers[index] : `__column_${index + 1}`, cell]));
   const errors: ValidationError[] = [];
   if (record.cells.length === 1 && record.cells[0] === '' && headers.length > 1) {
     return { values, errors: [{ field: 'row', code: 'EMPTY_ROW', message: 'Row is empty' }], sale: null };

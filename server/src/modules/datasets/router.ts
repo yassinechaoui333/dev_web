@@ -84,12 +84,15 @@ datasetsRouter.delete('/:datasetId', authenticate, async (req, res) => {
   const userId = res.locals.user.id;
   const dataset = await ownedDataset(req.params, userId);
   const jobs = await db.$transaction(async tx => {
+    // Lock the dataset first: concurrent uploads wait, then fail with 404, so
+    // every job whose file must be removed is in the list below.
+    const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "Dataset" WHERE id = ${dataset.id}::uuid AND "ownerId" = ${userId}::uuid FOR UPDATE`;
+    if (!locked.length) throw new ApiError(404, 'NOT_FOUND', 'Dataset not found');
     const found = await tx.importJob.findMany({ where: { datasetId: dataset.id }, select: { id: true } });
-    const deleted = await tx.dataset.deleteMany({ where: { id: dataset.id, ownerId: userId } });
-    if (!deleted.count) throw new ApiError(404, 'NOT_FOUND', 'Dataset not found');
+    await tx.dataset.delete({ where: { id: dataset.id } });
     await tx.activity.create({ data: { actorId: userId, action: 'dataset.delete', entityType: 'dataset', entityId: dataset.id } });
     return found;
-  });
+  }, { maxWait: 10_000, timeout: 120_000 });
   await Promise.all(jobs.map(job => removeSource(job.id).catch(error => console.error({ importJobId: job.id, error }))));
   res.status(204).end();
 });
@@ -129,6 +132,8 @@ datasetsRouter.post('/:datasetId/imports', authenticate, requireOwnedDataset, re
     await removeSource(jobId);
     // A concurrent upload of the same bytes won the unique(datasetId, contentHash) race.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw duplicate((await findExisting())?.id);
+    // The dataset was deleted while the file was being stored.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') throw new ApiError(404, 'NOT_FOUND', 'Dataset not found');
     throw error;
   }
   enqueueImport(job.id);

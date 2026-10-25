@@ -113,6 +113,8 @@ test('malformed files fail without publishing rows; retry reuses the same job an
   assert.equal(retried.body.data.retryCount, 1);
   assert.equal((await finished(agent, dataset.id, failed.id)).status, 'failed');
 
+  const nul = await upload(agent, dataset.id, header + 'A,1,bad\u0000desc,1,2026-01-01T00:00:00Z,1,,UK\n').expect(202);
+  assert.match((await finished(agent, dataset.id, nul.body.data.id)).error, /NUL characters/);
   const headers = await upload(agent, dataset.id, 'InvoiceNo,StockCode\nA,B\n').expect(202);
   assert.match((await finished(agent, dataset.id, headers.body.data.id)).error, /Missing required column headers: Description/);
 
@@ -143,7 +145,7 @@ test('input validation and upload limits', async () => {
   const agent = await member();
   await agent.post('/api/datasets').set(origin).send({ title: 'X', currency: 'JPY' }).expect(400);
   await agent.post('/api/datasets').set(origin).send({ title: 'X', currency: 'GBP', ownerId: randomUUID() }).expect(400);
-  await agent.post('/api/datasets').set(origin).send({ title: 'X', currency: 'GBP', timezone: 'Mars/Base' }).expect(400);
+  for (const timezone of ['Mars/Base', '+01:00', 'europe/london']) await agent.post('/api/datasets').set(origin).send({ title: 'X', currency: 'GBP', timezone }).expect(400);
   await agent.post('/api/datasets').set(origin).send({ title: ' ', currency: 'GBP' }).expect(400);
   await agent.get('/api/datasets/not-a-uuid').expect(400);
   await agent.get('/api/datasets?pageSize=101').expect(400);

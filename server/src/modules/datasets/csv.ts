@@ -4,6 +4,7 @@
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const MAX_RECORDS = 100_000;
 export const MAX_FIELD_BYTES = 64 * 1024;
+export const MAX_FIELDS = 1000;
 export const REQUIRED_HEADERS = ['InvoiceNo', 'StockCode', 'Description', 'Quantity', 'InvoiceDate', 'UnitPrice', 'CustomerID', 'Country'] as const;
 
 export class CsvFileError extends Error {}
@@ -11,8 +12,12 @@ export class CsvFileError extends Error {}
 export type CsvRecord = { sourceRow: number; cells: string[] };
 
 export function decodeCsv(bytes: Buffer) {
-  try { return new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes); }
+  let text: string;
+  try { text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes); }
   catch { throw new CsvFileError('File is not valid UTF-8 text'); }
+  // PostgreSQL text/JSONB cannot store NUL; it also signals a binary file.
+  if (text.includes('\u0000')) throw new CsvFileError('File contains NUL characters; upload a plain-text CSV file');
+  return text;
 }
 
 function checkField(value: string, line: number) {
@@ -25,11 +30,17 @@ function checkField(value: string, line: number) {
 // Returns the header plus data records. sourceRow numbers logical records with
 // the header as row 1, so a quoted multiline value still occupies one row.
 export function parseCsv(text: string): { headers: string[]; records: CsvRecord[] } {
-  // Trailing line breaks do not create empty records.
-  const input = text.replace(/[\r\n]+$/, '');
+  // Trailing line breaks do not create empty records. (A loop, not /[\r\n]+$/,
+  // which backtracks quadratically on long runs of line breaks.)
+  let end = text.length;
+  while (end > 0 && (text[end - 1] === '\n' || text[end - 1] === '\r')) end--;
+  const input = text.slice(0, end);
   const rows: string[][] = [];
   let cells: string[] = [], field = '', quoted = false, line = 1, recordLine = 1, i = 0;
-  const endField = () => { checkField(field, recordLine); cells.push(field); field = ''; quoted = false; };
+  const endField = () => {
+    checkField(field, recordLine); cells.push(field); field = ''; quoted = false;
+    if (cells.length > MAX_FIELDS) throw new CsvFileError(`Line ${recordLine} has more than ${MAX_FIELDS} columns`);
+  };
   const endRecord = () => {
     endField(); rows.push(cells); cells = [];
     if (rows.length - 1 > MAX_RECORDS) throw new CsvFileError(`File exceeds ${MAX_RECORDS.toLocaleString('en')} data records`);

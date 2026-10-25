@@ -118,10 +118,16 @@ function UploadPanel({ dataset, onUploaded }: { dataset: Dataset; onUploaded: ()
 function ImportHistory({ datasetId, version }: { datasetId: string; version: number }) {
   const [page, setPage] = useState(1), [result, setResult] = useState<Page<ImportJob> | null>(null);
   const [error, setError] = useState(''), [actionError, setActionError] = useState(''), [selected, setSelected] = useState<ImportJob | null>(null);
+  const [retrying, setRetrying] = useState(''), latest = useRef(0);
   const load = useCallback(async () => {
-    try { setResult(await listImports(datasetId, page)); setError(''); } catch (e) { setError((e as Error).message); }
+    // Polling and paging can overlap; only the newest response is applied.
+    const request = ++latest.current;
+    try { const r = await listImports(datasetId, page); if (request === latest.current) { setResult(r); setError(''); } }
+    catch (e) { if (request === latest.current) setError((e as Error).message); }
   }, [datasetId, page]);
   useEffect(() => { void load(); }, [load, version]);
+  // A new upload appears first, so show page 1 after uploading.
+  useEffect(() => { if (version) setPage(1); }, [version]);
   // Refresh while any visible job is still queued or processing.
   const active = result?.data.some(job => job.status === 'pending' || job.status === 'processing');
   useEffect(() => {
@@ -131,8 +137,9 @@ function ImportHistory({ datasetId, version }: { datasetId: string; version: num
   }, [active, load]);
 
   async function retry(job: ImportJob) {
-    setActionError('');
+    setActionError(''); setRetrying(job.id);
     try { await retryImport(datasetId, job.id); await load(); } catch (e) { setActionError((e as Error).message); }
+    finally { setRetrying(''); }
   }
   return <div className="history">
     <h2>Import history</h2>
@@ -152,7 +159,7 @@ function ImportHistory({ datasetId, version }: { datasetId: string; version: num
             <td>{job.status === 'completed' ? job.rejectedRows : '—'}</td>
             <td><div className="actions">
               {job.status === 'completed' && job.rejectedRows > 0 && <button className="secondary" aria-pressed={selected?.id === job.id} onClick={() => setSelected(selected?.id === job.id ? null : job)}>{selected?.id === job.id ? 'Hide rejected rows' : 'View rejected rows'}</button>}
-              {job.status === 'failed' && <button className="secondary" onClick={() => void retry(job)}>Retry</button>}
+              {job.status === 'failed' && <button className="secondary" disabled={retrying === job.id} onClick={() => void retry(job)}>{retrying === job.id ? 'Retrying…' : 'Retry'}</button>}
             </div></td>
           </tr>)}</tbody>
         </table></div>
