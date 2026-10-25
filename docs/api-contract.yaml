@@ -1522,8 +1522,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
+        "description": "Datasets owned by the session user, ordered createdAt desc, id desc.",
         "parameters": [
           {
             "name": "page",
@@ -1639,8 +1638,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
+        "description": "Creates a dataset owned by the session user. description/category/source default to ''; dateFormat defaults to ISO8601; timezone defaults to UTC and must be an IANA name. currency, dateFormat and timezone cannot be changed later. ownerId and unknown fields are rejected.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1790,8 +1788,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
+        "description": "Owner only; missing and other users' datasets (including for admins) return 404.",
         "parameters": [
           {
             "name": "datasetId",
@@ -1881,8 +1878,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
+        "description": "Owner only. Cascades import jobs, raw/clean records, dashboards and shares, then removes retained upload files.",
         "parameters": [
           {
             "name": "datasetId",
@@ -1897,8 +1893,7 @@
       },
       "patch": {
         "summary": "Ahmed: edit dataset metadata; parsing/currency immutable after import",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
+        "description": "Owner only. Edits title/description/category/source; currency, dateFormat and timezone are not editable.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2108,8 +2103,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Multipart CSV file, maximum 10 MiB. SHA-256 of original bytes unique per dataset; duplicate content returns 409 DUPLICATE_IMPORT with existing job ID in message. Return 202 after durable source storage and pending job creation. Worker runs separately; never expose partially processed sales.",
+        "description": "Multipart CSV file, maximum 10 MiB. SHA-256 of original bytes unique per dataset; duplicate content returns 409 DUPLICATE_IMPORT with existing job ID in message. Return 202 after durable source storage and pending job creation. Worker runs separately; never expose partially processed sales. Field name file with a .csv filename; 400 INVALID_UPLOAD, UNSUPPORTED_FILE or EMPTY_FILE; 413 FILE_TOO_LARGE. Row validation codes: server/src/modules/datasets/README.md.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2242,8 +2236,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
+        "description": "Import history of an owned dataset, createdAt desc, id desc.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2370,8 +2363,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
+        "description": "Poll for progress: pending, processing, then completed or failed. Counters are final only when completed; failed jobs carry error and zero processed/accepted/rejected counts.",
         "parameters": [
           {
             "name": "datasetId",
@@ -2495,8 +2487,7 @@
             }
           }
         },
-        "x-status": "reserved",
-        "description": "Contract only; runtime returns 404 until the owning developer implements this endpoint.",
+        "description": "Original records (accepted and rejected) of completed jobs only, ordered by import createdAt desc, then sourceRow asc.",
         "parameters": [
           {
             "name": "datasetId",
@@ -4921,8 +4912,7 @@
     "/api/datasets/{datasetId}/imports/{importJobId}/rejections": {
       "get": {
         "summary": "Ahmed: rejected rows with sourceRow and validationErrors",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
+        "description": "Rows with validationErrors for a completed job, sourceRow asc; empty for other statuses. Each error: field (CSV column name or 'row'), code, message.",
         "responses": {
           "200": {
             "description": "Success",
@@ -5045,8 +5035,7 @@
     "/api/datasets/{datasetId}/imports/{importJobId}/retry": {
       "post": {
         "summary": "Ahmed: retry failed job using retained source file",
-        "x-status": "reserved",
-        "description": "Contract only; owning teammate implements this endpoint. Runtime currently returns 404.",
+        "description": "Failed jobs only (409 IMPORT_NOT_FAILED otherwise; 409 SOURCE_UNAVAILABLE when the retained file is missing). Same job ID, retryCount+1; staging rows are removed atomically before reprocessing.",
         "responses": {
           "202": {
             "description": "Success",

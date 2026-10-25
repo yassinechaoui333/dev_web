@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { db } from './db.js';
 import { authRouter } from './modules/auth/router.js';
+import { datasetsRouter } from './modules/datasets/router.js';
 import { ApiError, errorHandler } from './shared/errors.js';
 import { csrfGuard } from './shared/security.js';
 export const app = express();
@@ -16,5 +17,6 @@ app.get('/api/health', async (_req, res) => {
   catch { throw new ApiError(503, 'DATABASE_UNAVAILABLE', 'Database unavailable'); }
 });
 app.use('/api/auth', authRouter);
+app.use('/api/datasets', datasetsRouter);
 app.use((_req, _res, next) => next(new ApiError(404, 'NOT_FOUND', 'Endpoint not found')));
 app.use(errorHandler);

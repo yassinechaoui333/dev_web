@@ -1,1 +1,1 @@
-Reserved feature folder. See AGENTS.md for ownership. Implement only after branching from the foundation checkpoint.
+Ahmed: dataset UI mounted at /app/datasets (list + create) and /app/datasets/:datasetId (details, edit, delete, CSV upload, import history with live status, retry, rejected-row report). API usage is in api.ts; pipeline rules are in server/src/modules/datasets/README.md.
