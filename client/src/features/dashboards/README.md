@@ -1,1 +1,1 @@
-Reserved feature folder. See AGENTS.md for ownership. Implement only after branching from the foundation checkpoint.
+Abdelali — screens implemented in the complete MVP. See client/src/main.tsx and docs/team-status.md.

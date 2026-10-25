@@ -1,0 +1,11 @@
+InvoiceNo,StockCode,Description,Quantity,InvoiceDate,UnitPrice,CustomerID,Country
+INV-001,001,Tasse,4,2026-01-10T10:00:00Z,5.25,00042,United Kingdom
+INV-001,002,Carnet,2,2026-01-10T10:00:00Z,8.50,00042,United Kingdom
+INV-002,003,Stylo,3,2026-01-11T12:00:00Z,2.00,,France
+C-003,001,Retour tasse,1,2026-01-12T09:00:00Z,5.25,00042,United Kingdom
+INV-004,004,Crayon,1,2026-01-13T10:00:00Z,1.00,00045,France
+INV-005,004,Crayon,1,2026-01-14T10:00:00Z,1.00,00046,France
+INV-006,004,Crayon,1,2026-01-15T10:00:00Z,1.00,00047,France
+INV-007,004,Crayon,100,2026-01-16T10:00:00Z,1.00,00048,France
+BAD-001,005,Ligne invalide,abc,2026-01-16T10:00:00Z,1.00,,France
+BAD-002,005,Date invalide,1,2026-02-30T10:00:00Z,1.00,,France
