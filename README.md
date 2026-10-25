@@ -59,9 +59,12 @@ La CI lance ses propres PostgreSQL et tests. Les captures navigateur montrent de
 
 ## Livrables et documentation
 
-- [Rapport français](deliverables/rapport-projet-fr.pdf)
-- [Présentation française](deliverables/presentation-projet-fr.pptx)
-- [Notes de soutenance](docs/notes-soutenance-fr.md)
+- [Rapport détaillé français — 20 pages](deliverables/rapport-detaille-fr-20-pages.pdf)
+- [Présentation détaillée — 18 diapositives PowerPoint](deliverables/presentation-detaillee-fr-18-diapos.pptx)
+- [Présentation détaillée — PDF de 18 pages](deliverables/presentation-detaillee-fr-18-diapos.pdf)
+- [Notes pour les 18 diapositives](docs/notes-soutenance-detaillee-fr.md)
+
+Les versions courtes initiales restent disponibles dans `deliverables/`. Le rapport détaillé contient le sommaire, les responsabilités fonctionnelles des quatre membres, l’architecture, les règles métier, les captures réelles, les résultats vérifiés et les limites du MVP.
 - [Architecture et limites](docs/architecture.md)
 - [Contrat OpenAPI](docs/api-contract.yaml)
 - [Données et calculs communs](docs/data-contract.md)
