@@ -9,7 +9,7 @@ Auth, shared middleware, schema, SQL migration, fictional seed, app shell and co
 |---|---|---|
 | Yassine | Foundation/auth | Complete; migration, repeated seed, builds and auth checks pass |
 | Yassine | Profile/admin | Reserved; implementation follows foundation-v1 |
-| Ahmed | Datasets/import | Reserved, not implemented; schema and contract ready for review |
+| Ahmed | Datasets/import | Implemented on feature/datasets (pending review): dataset CRUD, async CSV import, rejection reports, retry; see server/src/modules/datasets/README.md |
 | Taha | Analytics/quality | Reserved, not implemented; decimal/filter conventions established |
 | Abdelali | Dashboards/sharing | Reserved, not implemented; Recharts 3 and read-only access conventions established |
 
