@@ -1,0 +1,14 @@
+InvoiceNo,StockCode,Description,Quantity,InvoiceDate,UnitPrice,CustomerID,Country
+INV-1001,00123,Ceramic mug,6,2026-03-02T09:15:00Z,3.5000,00042,United Kingdom
+INV-1001,00456,"Linen napkin, set of 4",2,2026-03-02T09:15:00Z,7.25,00042,United Kingdom
+INV-1002,00789,"Notebook ""A5""",10,2026-03-03T14:00:00+01:00,1.2,,France
+C1003,00123,Ceramic mug,2,2026-03-04T10:00:00Z,3.5,00042,United Kingdom
+INV-1004,00456,Linen napkin return,-1,2026-03-05T11:30:00,7.25,00077,Spain
+INV-1005,00999,"Gift card
+with handwritten note",1,2026-03-06T08:00:00Z,0,  00077  ,Spain
+INV-1006,00123,Ceramic mug,abc,2026-03-07T09:00:00Z,3.5,00042,United Kingdom
+INV-1007,00123,Ceramic mug,1,2026-02-30T09:00:00Z,3.5,00042,United Kingdom
+INV-1008,00456,Linen napkin,1,2026-03-08T09:00:00Z,-2.00,00042,United Kingdom
+,00456,Linen napkin,1,2026-03-08T09:00:00Z,7.25,00042,United Kingdom
+INV-1009,00456,Linen napkin,1.12345,2026-03-08T09:00:00Z,7.25,,Germany
+INV-1001,00123,Ceramic mug,6,2026-03-02T09:15:00Z,3.5000,00042,United Kingdom
