@@ -1,11 +1,9 @@
-# Profile, permissions and administration foundation
+# Compléter le MVP de ventes et qualité des données
 
-The repository now provides the shared platform and Yassine's account/administration module. Visitors can view a presentation and register/sign in; members can manage their profiles; active admins can manage account roles/status and review global counts, dataset metadata and audit activity.
+Ajoute les modules datasets/imports, exploration/analyses et dashboards/partages à la fondation existante. Le parcours CSV → analyse → dashboard enregistré → partage fonctionne avec un exemple fictif reproductible.
 
-PostgreSQL stores hashed session tokens and scrypt password hashes. All mutations enforce the agreed origin/header checks. Privilege-bearing fields are rejected on self-service inputs; admin changes revoke sessions and recheck permissions transactionally. Shared resource helpers preserve dataset ownership and read-only dashboard scope.
+L’import conserve les sources et les valeurs brutes, valide les lignes, bloque les fichiers identiques par dataset et publie transactionnellement les ventes après traitement. Les analyses sont filtrées/paginées côté serveur et les montants restent décimaux. Les dashboards réutilisent les calculs, enregistrent leur configuration et accordent seulement une lecture révocable.
 
-The foundation includes the shared schema, initial migration, safe fictional seed, npm workspace, CI and finalized team contracts. Data import, analytics and dashboards remain reserved for their owners. No published teammate contract was silently changed; the initial draft was finalized before foundation-v1 publication, as documented in contract-changelog.md.
+Ajouts de contrat explicités dans docs/contract-changelog.md ; migration additive ImportSource. Node 22.12+ et PostgreSQL 16 sont requis. Le worker est intégré au serveur pour garder le MVP simple.
 
-Validation: both production builds and nine automated checks pass against PostgreSQL 16. Browser checks pass for the visitor/auth/profile/admin flow, mobile layout and member access denial. See integration-summary.md for exact setup, checkpoints, test coverage and limitations.
-
-Setup: Node 22.12+, PostgreSQL 16 or Docker Compose; copy .env.example, npm ci, generate/migrate/seed, then npm run dev. No external service credentials are required. Docker was not available in this environment; real PostgreSQL was used directly for verification.
+Vérifications : builds, 12 tests automatisés et parcours navigateur complet, dont les restrictions d’accès et l’affichage mobile. Rapport français et présentation disponibles dans deliverables/ ; répartition fonctionnelle des quatre membres incluse.

@@ -1,6 +1,6 @@
 # Scope mapping to the supplied full-stack brief
 
-The brief describes the whole team application. Yassine implements only the foundation and account/administration responsibilities.
+The brief describes the whole team application. Yassine initially implemented foundation/accounts/admin. On 25 October he authorized completion of all modules, retaining the functional mapping below.
 
 | Brief area | Owner / foundation deliverable |
 |---|---|
@@ -8,9 +8,9 @@ The brief describes the whole team application. Yassine implements only the foun
 | User profile | Yassine: name/email/password management |
 | Admin accounts, dataset oversight, activity and global indicators | Yassine: protected administration screens/endpoints |
 | Frontend/backend separation, REST, database scripts, security and errors | Yassine: shared workspace, Prisma schema/migration, access middleware, contracts and checks |
-| Dataset metadata, CSV ingestion, rejection reports, async processing | Ahmed: reserved folders/routes; shared schema includes title/description/category/source, raw values and import hashes |
-| Explorer, analytics, quality, outliers, comparisons | Taha: reserved folders/routes and shared response/metric conventions |
-| Visualizations, saved analyses and sharing | Abdelali: reserved folders/routes; Recharts 3, config schema and owner/share access helpers |
+| Dataset metadata, CSV ingestion, rejection reports, async processing | Ahmed: implemented folders/routes; shared schema includes title/description/category/source, raw values and import hashes |
+| Explorer, analytics, quality, outliers, comparisons | Taha: implemented folders/routes and shared response/metric conventions |
+| Visualizations, saved analyses and sharing | Abdelali: implemented folders/routes; Recharts 3, config schema and owner/share access helpers |
 | Public dashboards, extra input sources, ML and forecasting | Optional in brief; outside agreed MVP |
 | Final group presentation | Team deliverable; outside Yassine's implementation request |
 

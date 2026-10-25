@@ -1,23 +1,22 @@
-# Team integration status
+# État d’intégration
 
-## Verified shared foundation
-- Foundation checkpoint: **5ac57d64b7ac1056ac2ec58944d03285d8301838**, tag **foundation-v1.1**, on local main.
-- Initial checkpoint: 2c7dd318ae683397af59b3dae5d03340ef4d91f1, tag foundation-v1. The v1.1 follow-up fixes explicit root .env loading for Prisma and localhost binding.
-- Yassine's completed profile/admin work is on feature/auth-admin. Nothing has been pushed to GitHub by the assistant.
-- All required contract files are present and finalized. Contracts marked x-status: reserved are not implemented.
+Le MVP complet est implémenté sur **feature/auth-admin**, à la demande de Yassine du 25 octobre 2026. Les noms ci-dessous indiquent la répartition fonctionnelle convenue de l’équipe.
 
-| Owner | Module | Readiness |
+| Membre | Module | État |
 |---|---|---|
-| Yassine | Foundation/auth/permissions | Complete: workspace, migration, seed, sessions, access helpers, public presentation and protected app shell |
-| Yassine | Profile/admin | Complete: personal details/passwords, role/status management, dataset metadata oversight, global counts and activity screens |
-| Ahmed | Datasets/import | Ready to start; feature/datasets; implementation reserved |
-| Taha | Explorer/analytics/quality/outliers/comparison | Ready to start; feature/analytics; implementation reserved |
-| Abdelali | Charts/saved dashboards/sharing | Ready to start; feature/dashboards; implementation reserved; use Recharts 3 |
+| Yassine | Socle, comptes, permissions, profil, administration | Intégré et vérifié |
+| Ahmed | Datasets, CSV, jobs, validation, rejets et reprise | Intégré et vérifié |
+| Taha | Exploration, indicateurs, qualité, IQR, comparaisons | Intégré et vérifié |
+| Abdelali | Graphiques, dashboards, filtres et partage | Intégré et vérifié |
 
-## Checks
-Fresh PostgreSQL 16 migration and repeatable seed verified. Client/server production builds pass. Nine automated checks cover auth, permissions, CSRF, hashing, filters, profile/session revocation, concurrent account-security changes and shared access helpers. Headless browser checks pass for the visitor page, admin login, repeated switching between all three admin sections, profile save, 390px mobile layout without horizontal overflow, logout and member UI/API denial.
+Fondation historique : foundation-v1.1 / 5ac57d64b7ac1056ac2ec58944d03285d8301838. Les nouveaux changements restent sur la branche de travail ; une fusion dans main se fait après revue, sans écraser un travail distant.
 
-## Handoff
-Push local main, feature/auth-admin and foundation tags; merge feature/auth-admin into main after review. Teammates should branch from origin/main after that merge to include all of Yassine's completed work. If beginning in parallel before the merge, foundation-v1.1 is the common contract checkpoint. Coordinate later shared file changes through Yassine.
+## Vérifications
+- Migrations réelles sur PostgreSQL 16 via Docker et seed répété.
+- Builds TypeScript client/serveur.
+- 12 tests automatisés : sécurité, import réel, erreurs et reprise, dates, calculs, filtres, qualité, IQR, dashboards et partages.
+- Navigateur : CSV, rapport des rejets, exploration, qualité, comparaison, création de dashboard, partage en lecture seule, révocation, administration et affichage mobile.
+- Rapport de 4 pages en français et présentation de 10 diapositives ; responsabilités des quatre membres indiquées.
 
-No unfinished required Yassine/foundation requirements remain. The overall import-to-dashboard workflow awaits the three teammates' modules. Production hardening beyond the agreed MVP is listed in architecture.md. No teammate code existed at initial inspection and no teammate feature implementation was added.
+## Limites assumées
+MVP pour petits volumes : 10 Mio et 100 000 lignes par import, worker simple dans le processus API, fichiers stockés en base. Les limites de production et les fonctions de compte non prévues sont documentées dans architecture.md. Pas de déploiement automatique ni de dashboards publics. Les données fournies sont fictives.
